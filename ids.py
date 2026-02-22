@@ -30,7 +30,7 @@ class PacketCapture:
     def start_capture(self, interface="eth0"):
         '''
         The start_capture method begins capturing packets on a specified
-        interface (defaulting to etho0 to capture packets from the Ethernet interface).
+        interface (defaulting to eth0 to capture packets from the Ethernet interface).
         Run ifconfig to understand the available interfaces and select the appropriate interface from the list.
         '''
         def capture_thread():
@@ -175,16 +175,15 @@ class DetectionEngine:
             ]])
 
             anomaly_score = self.anomaly_detector.score_samples(feature_vector)[0]
-            if anomaly_score < -0.5: #Threshold for anomaly detection
+            if anomaly_score < -0.55: #Threshold for anomaly detection
                 threats.append({
                     'type' : 'anomaly',
                     'score' : anomaly_score,
                     'confidence' : min(1.0, abs(anomaly_score))
                 })
             
-            else:
-                print("Warning: Anomaly detector is not trained. Skipping anomaly detection.")
-            return threats
+        else:
+            print("Warning: Anomaly detector is not trained. Skipping anomaly detection.")
         
         '''
         Finally, returning the aggregated list of identified threats with their respective annotation (either signature or anomaly),
@@ -249,8 +248,8 @@ class IntrusionDetectionSystem:
         user_interface = input(f"Enter network interface (default is 'eth0'): ").strip()
         self.interface = user_interface if user_interface else interface
     
-    def collect_normal_traffic(self, sample_count = 500):
-        print(f"Collecting {sample_count} normal taffic samples for training...")
+    def collect_normal_traffic(self, sample_count = 50):
+        print(f"Collecting {sample_count} normal traffic samples for training...")
         collected_samples = []
 
         while len(collected_samples) < sample_count:
