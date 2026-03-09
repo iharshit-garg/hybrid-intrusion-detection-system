@@ -2,3 +2,5 @@
 __pycache__/
 .venv/
 ids_alerts.log
+KDDTest+.csv
+KDDTrain+.csv
