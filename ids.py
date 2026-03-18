@@ -10,29 +10,17 @@ from datetime import datetime
 
 class PacketCapture:
     def __init__(self):
-        '''
-        The init method initialized the class by creating a
-        queue.Queue to store captured packets and a threading
-        event to control when the packet capture should stop.
-        '''
+        #store captured packets and a threading event to control when the packet capture should stop
         self.packet_queue = queue.Queue()
         self.stop_capture = threading.Event()
 
     def packet_callback(self, packet):
-        '''
-        THe packet_callback method acts as a handler for each captured
-        packet and checks if the packet contains both IP and TCP layers.
-        If so, it adds it to the queue for further processing.
-        '''
+        #handler for each captured packet and checks if the packet contains both IP and TCP layers. If so, it adds it to the queue for further processing
         if IP in packet and TCP in packet:
             self.packet_queue.put(packet)
         
     def start_capture(self, interface="eth0"):
-        '''
-        The start_capture method begins capturing packets on a specified
-        interface (defaulting to eth0 to capture packets from the Ethernet interface).
-        Run ifconfig to understand the available interfaces and select the appropriate interface from the list.
-        '''
+        #capture packets on a specified interface (defaulting to eth0)
         def capture_thread():
             sniff(iface=interface,
                   prn=self.packet_callback,
@@ -46,34 +34,21 @@ class PacketCapture:
         self.stop_capture.set()
         self.capture_thread.join()
 
-'''Tracking connection flows and calculate statistics for packets in real time.
-'''
+#Tracking connection flows and calculate statistics for packets in real time.
 class TrafficAnalyzer:
     
-    '''__init__ method initializes two attributes: connections, which stores lists of related packets for each flow,
-    and flow_stats, which stores aggregated statistics for each flow, such as packet count, byte count, start time,
-    and the time of the most recent packet.
-    '''
+    #connections, which stores lists of related packets for each flow, and flow_stats, which stores aggregated statistics for each flow
     def __init__(self):
-        '''Using the defaultdict data structure in Python to 
-        manage connections and flow statistics by organizing data by unique flows.
-        '''
         self.connections = defaultdict(list)
         self.flow_stats = defaultdict(lambda: {
             'packet_count':0,
             'byte_count' : 0,
             'start_time' : None,
-            'last_time' : None
+            'last_time' : None,
         })
 
     def analyze_packet(self, packet):
-        '''
-        This class processes each packet. If the packet contains IP and TCP layers,
-        it extracts the source and destination IPs and ports, forming an unique,
-        flow_key to identify the flow. It updates the statistics for the flow by incrementing
-        the packet count, adding the packet's size to the byte count, and setting or updating the start
-        and last time of the flow. Eventually, it calls extract_features to calculate and return additional metrics.
-        '''
+        #If the packet contains IP and TCP layers, extract the src and dest IPs and ports
         if IP in packet and TCP in packet:
             ip_src = packet[IP].src
             ip_dst = packet[IP].dst
@@ -95,11 +70,6 @@ class TrafficAnalyzer:
             return self.extract_features(packet, stats)
         
     def extract_features(self, packet, stats):
-        '''
-        This class computes detailed characteristics of the flow and the current packet.
-        These include the packet size, flow duration, packet rate, byte rate, TCP flags,
-        and the TCP window size. These metrics are quite useful to identify patterns, anomalies, or potential threats in network traffic.
-        '''
         duration = stats['last_time'] - stats['start_time']
         if duration == 0:
             duration = 1e-6  # Avoid division by zero
@@ -137,10 +107,7 @@ class DetectionEngine:
              }
         }
     
-    '''
-    The train_anomaly_detector method trains the Isolation Forest model using a dataset of normal traffic features.
-    This enables the model to differentiate typical patterns from anomalies.
-    '''
+    #training Isolation Forest model using a dataset of normal traffic features.
     def train_anomaly_detector(self, normal_traffic_data):
         self.anomaly_detector.fit(normal_traffic_data)
     
@@ -184,19 +151,10 @@ class DetectionEngine:
             
         else:
             print("Warning: Anomaly detector is not trained. Skipping anomaly detection.")
-        
-        '''
-        Finally, returning the aggregated list of identified threats with their respective annotation (either signature or anomaly),
-        the rule or score that triggered the anomaly, and a confidence score that suggests how likely it is that the identified pattern
-        is a threat.
-        '''
+    
         return threats
 
 class AlertSystem:
-    '''
-    The init method sets up a logger named IDS_Alerts with an INFO logging level to capture
-    aler information. It is writing logs to 'ids_alerts.log' by default. 
-    '''
     def __init__ (self, log_file="ids_alerts.log"):
         self.logger = logging.getLogger("IDS_Alerts")
         self.logger.setLevel(logging.INFO)
@@ -226,10 +184,7 @@ class AlertSystem:
 
         self.logger.warning(json.dumps(alert))
 
-        '''
-        If confidence level of a detected threat is higher than 0.8, the alert is escalated and logged as a CRITICAL
-        level message. 
-        '''
+        #If confidence level of a detected threat is higher than 0.8, the alert is escalated and logged as a CRITICAL level message. 
         if threat['confidence'] > 0.8:
             self.logger.critical(
                 f"High confidence threat detected: {json.dumps(alert)}"
